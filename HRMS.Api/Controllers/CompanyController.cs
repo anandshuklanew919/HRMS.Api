@@ -1,51 +1,60 @@
-﻿using HRMS.Api.Business.CompanyManagement.CompanyRepository;
-using HRMS.Api.Business.CompanyManagement.DTO;
-using Microsoft.AspNetCore.Authorization;
+﻿using HRMS.Api.Dtos;
+using HRMS.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace HRMS.Api.Controllers
 {
-    [Route("api/[Controller]")]
-    [Authorize]
     [ApiController]
+    [Route("api/[controller]")]
     public class CompanyController : ControllerBase
     {
-        private readonly ICompanyRepository companyRepository;
+        private readonly CompanyService _companyService;
 
-        public CompanyController(ICompanyRepository companyRepository)
+        public CompanyController(CompanyService companyService)
         {
-            this.companyRepository = companyRepository;
+            _companyService = companyService;
         }
 
-        [HttpGet("get-company")]
-        public async Task<List<CompanyDto>> GetCompany()
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<CompanyDTO>>> GetCompanies()
         {
-            return await companyRepository.GetAllCompony();
+            var companies = await _companyService.GetAllCompaniesAsync();
+            return Ok(companies);
         }
 
-        [HttpGet("get-company-by-id/{id}")]
-        public async Task<CompanyDto> GetCompanyById([Required]long id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<CompanyDTO>> GetCompany(long id)
         {
-            return await companyRepository.GetComponyById(id);
+            var company = await _companyService.GetCompanyByIdAsync(id);
+            if (company == null)
+                return NotFound();
+            return Ok(company);
         }
 
-        [HttpPost("create-company")]
-        public async Task<List<CompanyDto>> CreateCompany([Required] [FromBody] CompanyDto companyDto)
+        [HttpPost]
+        public async Task<ActionResult> CreateCompany([FromBody] CompanyDTO companyDto)
         {
-            return await companyRepository.CreateCompany(companyDto);
+            await _companyService.AddCompanyAsync(companyDto);
+            return CreatedAtAction(nameof(GetCompany), new { id = companyDto.CompanyId }, companyDto);
         }
 
-        [HttpPut("edit-company")]
-        public async Task<List<CompanyDto>> EditCompany([Required] [FromBody] CompanyDto companyDto)
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateCompany(long id, [FromBody] CompanyDTO companyDto)
         {
-            return await companyRepository.EditCompany(companyDto);
+            if (id != companyDto.CompanyId)
+                return BadRequest();
+
+            await _companyService.UpdateCompanyAsync(companyDto);
+            return NoContent();
         }
 
-        [HttpDelete("delete-company")]
-        public async Task<List<CompanyDto>> DeleteCompany([Required] long id)
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteCompany(long id)
         {
-            return await companyRepository.DeleteCompany(id);
+            await _companyService.DeleteCompanyAsync(id);
+            return NoContent();
         }
     }
 }

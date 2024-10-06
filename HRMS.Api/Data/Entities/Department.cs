@@ -1,19 +1,20 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
 namespace HRMS.Api.Data.Entities
 {
-    public class Department
+    public partial class Department
     {
-        [Key]
+        public Department()
+        {
+            Employees = new HashSet<Employee>();
+        }
+
         public long DepartmentId { get; set; }
-
-        [ForeignKey("FK_Department_BusinessUnit_BusinessUnitId")]
-        public long BusinessUnitId { get; set; }
-
-        [MaxLength(100), Required]
         public string DepartmentName { get; set; }
+        public long? CompanyId { get; set; }
 
-        public BusinessUnit BusinessUnit  { get; set; }
+        public virtual Company Company { get; set; }
+        public virtual ICollection<Employee> Employees { get; set; }
     }
 }
